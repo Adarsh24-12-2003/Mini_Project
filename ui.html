@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Image Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#0284c7',
+secondary: '#64748b'
+},
+borderRadius: {
+'none': '0px',
+'sm': '4px',
+DEFAULT: '8px',
+'md': '12px',
+'lg': '16px',
+'xl': '20px',
+'2xl': '24px',
+'3xl': '32px',
+'full': '9999px',
+'button': '8px'
+}
+}
+}
+}
+</script>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body { font-family: 'Inter', sans-serif; }
+.dark { background-color: #0f172a; color: #f1f5f9; }
+.dark .dark\:bg-slate-800 { background-color: #1e293b; }
+.dark .dark\:text-white { color: #ffffff; }
+.dark .dark\:border-slate-700 { border-color: #334155; }
+.dark .dark\:bg-gray-800 { background-color: #1e293b; }
+.dark .dark\:text-gray-200 { color: #e5e7eb; }
+.dark .dark\:border-gray-700 { border-color: #374151; }
+.dark .dark\:hover\:bg-gray-700:hover { background-color: #374151; }
+.upload-zone { transition: all 0.3s ease; }
+.upload-zone:hover { transform: scale(1.01); }
+</style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+<div class="max-w-6xl mx-auto px-4 py-8">
+<header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+<div class="max-w-6xl mx-auto px-4">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center gap-8">
+<nav class="flex items-center gap-6">
+<a href="#" class="text-primary font-medium">Home</a>
+<a href="#" class="text-gray-600 hover:text-primary" id="aboutBtn">About</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button id="themeToggle" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer !rounded-button">
+<i class="ri-sun-line text-xl text-gray-600"></i>
+</button>
+</div>
+</div>
+</div>
+</header>
+<div class="h-16"></div>
+<div class="text-center mb-12">
+<h1 class="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Automated X-Ray Scanning Application to Detect Bone Fractures and Tumour using Deep Learning</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300">Upload X-ray images for instant analysis and medical insights.</p>
+</div>
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-8">
+<div class="mb-6">
+<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Analysis Type</label>
+<div class="relative">
+<select id="analysisType" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent !rounded-button">
+<option value="fracture">Fracture Detection</option>
+<option value="tumor">Tumor Detection</option>
+</select>
+</div>
+</div>
+<div id="uploadZone" class="upload-zone border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer mb-6">
+<div class="space-y-4">
+<i class="ri-upload-cloud-line text-5xl text-gray-400"></i>
+<div>
+<p class="text-lg font-medium text-gray-700 dark:text-gray-300">Drag and drop your medical image here</p>
+<p class="text-sm text-gray-500 dark:text-gray-400">or</p>
+</div>
+<button class="px-6 py-2 bg-primary text-white font-medium !rounded-button hover:bg-primary/90" id="browseFilesBtn">Browse Files</button>
+<p class="text-sm text-gray-500">Supported formats: JPEG, PNG, JPG</p>
+</div>
+</div>
+<div id="resultSection" class="hidden">
+  <div class="mb-6 flex justify-center">
+    <div>
+      <h3 class="text-lg font-medium mb-4 text-center">Original Image</h3>
+      <div id="originalImage" class="w-64 h-64 bg-gray-100 rounded-lg mx-auto bg-contain bg-no-repeat bg-center"></div>
+    </div>
+  </div>
+  <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
+    <h3 class="text-lg font-medium mb-4">Detection Results</h3>
+    <div id="predictionResults" class="space-y-2 hidden">
+      <!-- Prediction results will be inserted here -->
+    </div>
+  </div>
+</div>
+<div class="flex justify-center gap-4">
+<button id="predictBtn" class="px-6 py-2.5 bg-primary text-white font-medium !rounded-button hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" disabled>
+<span class="flex items-center gap-2">
+<i class="ri-magic-line"></i>
+Predict
+</span>
+</button>
+<button id="uploadAnotherBtn" class="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium !rounded-button hover:bg-gray-50 shadow-sm transition-all duration-200">
+<span class="flex items-center gap-2">
+<i class="ri-upload-line"></i>
+Upload Another Image
+</span>
+</button>
+</div>
+</div>
+<footer class="bg-black text-white mt-20">
+<div class="max-w-6xl mx-auto px-4 py-12">
+<div class="flex flex-col items-center justify-center gap-6 mb-8">
+<button id="technicalDetailsBtn" class="px-6 py-2.5 bg-primary text-white font-medium !rounded-button hover:bg-primary/90 shadow-sm transition-all duration-200">
+<span class="flex items-center gap-2">
+<i class="ri-information-line"></i>
+View Technical Details
+</span>
+</button>
+<div id="aboutModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-2xl w-full mx-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">About Our Project</h2>
+      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="closeAboutModal()">
+        <i class="ri-close-line text-2xl"></i>
+      </button>
+    </div>
+    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+<p>Our AI-powered medical image analysis system represents a breakthrough in healthcare technology, combining advanced machine learning algorithms with medical expertise to provide accurate and rapid diagnosis support.</p>
+<h3 class="text-lg font-medium text-gray-900 dark:text-white mt-6">Key Features:</h3>
+<ul class="list-disc pl-6 space-y-2">
+<li>Real-time fracture detection with high accuracy</li>
+<li>Advanced tumor detection capabilities</li>
+<li>Support for multiple image formats </li>
+<li>User-friendly interface for medical professionals</li>
+</ul>
+<p class="mt-6">This project aims to assist healthcare providers in making more informed decisions while reducing diagnosis time and improving patient care outcomes.</p>
+<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+<p class="text-sm text-gray-600 dark:text-gray-400">This project was developed by Computer Science Engineering students Adarsh S, Able Gerard Saji, Aswath Salim, and Amaldev Suresh under the guidance of Professor Parvathy Nair, Department of CSE, ASIET, as part of an academic project.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="technicalDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-2xl w-full mx-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Technical Details</h2>
+      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="closeTechnicalDetails()">
+        <i class="ri-close-line text-2xl"></i>
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">Model Information</h3>
+        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+          <li>ResNet for tumor detection</li>
+          <li>YOLOv8 for fracture detection</li>
+          <li>Trained on open medical datasets</li>
+        </ul>
+      </div>
+      <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-white">Performance Metrics</h3>
+        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+          <li>YOLO Accuracy: 90%</li>
+          <li>ResNet Accuracy: 96%</li>
+          <li>Average Processing Time: 2.3s</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-gray-800">
+<p class="text-sm text-gray-400">© 2025 All rights reserved.</p>
+<div class="flex items-center gap-6 mt-4 md:mt-0">
+<a href="#" class="text-gray-400 hover:text-primary"><i class="ri-twitter-x-line"></i></a>
+<a href="#" class="text-gray-400 hover:text-primary"><i class="ri-facebook-line"></i></a>
+<a href="#" class="text-gray-400 hover:text-primary"><i class="ri-instagram-line"></i></a>
+<a href="#" class="text-gray-400 hover:text-primary"><i class="ri-github-line"></i></a>
+</div>
+</div>
+<div class="mt-8 p-6 bg-gray-900 rounded-lg">
+<p class="text-sm text-gray-400"><span class="font-medium text-primary">Disclaimer:</span> This tool is designed to assist medical professionals and should not be used as a sole diagnostic method. Always consult with qualified healthcare providers for medical decisions.</p>
+</div>
+<div class="mt-8 text-center">
+
+</div>
+</footer>
+</div>
+<input type="file" id="fileInput" class="hidden" accept="image/jpeg, image/png, image/dicom">
+<script>
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+const themeIcon = themeToggle.querySelector('i');
+const header = document.querySelector('header');
+// Check system preference
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+let isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && prefersDark);
+// Initial theme setup
+function setTheme(dark) {
+isDark = dark;
+if(isDark) {
+body.classList.add('dark');
+themeIcon.classList.remove('ri-sun-line');
+themeIcon.classList.add('ri-moon-line');
+themeIcon.classList.remove('text-gray-600');
+themeIcon.classList.add('text-gray-200');
+header.classList.add('bg-gray-800');
+header.classList.remove('bg-white/80');
+localStorage.setItem('theme', 'dark');
+} else {
+body.classList.remove('dark');
+themeIcon.classList.add('ri-sun-line');
+themeIcon.classList.remove('ri-moon-line');
+themeIcon.classList.add('text-gray-600');
+themeIcon.classList.remove('text-gray-200');
+header.classList.add('bg-white/80');
+header.classList.remove('bg-gray-800');
+localStorage.setItem('theme', 'light');
+}
+}
+// Set initial theme
+setTheme(isDark);
+// Theme toggle handler
+themeToggle.addEventListener('click', () => {
+setTheme(!isDark);
+});
+// Listen for system theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+if (!localStorage.getItem('theme')) {
+setTheme(e.matches);
+}
+});
+const uploadZone = document.getElementById('uploadZone');
+const resultSection = document.getElementById('resultSection');
+const predictBtn = document.getElementById('predictBtn');
+const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
+const technicalDetailsBtn = document.getElementById('technicalDetailsBtn');
+const technicalDetailsModal = document.getElementById('technicalDetailsModal');
+const aboutBtn = document.getElementById('aboutBtn');
+const aboutModal = document.getElementById('aboutModal');
+const analysisType = document.getElementById('analysisType');
+const predictionResults = document.getElementById('predictionResults');
+const originalImage = document.getElementById('originalImage');
+const processedImage = document.getElementById('processedImage');
+const browseFilesBtn = document.getElementById('browseFilesBtn');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => {
+  fileInput.click();
+});
+
+browseFilesBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      originalImage.style.backgroundImage = `url(${e.target.result})`;
+      resultSection.classList.remove('hidden');
+      predictBtn.disabled = false;
+      predictionResults.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+predictBtn.addEventListener('click', async () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please upload an image first.');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('model_type', analysisType.value);
+
+  try {
+    const response = await fetch('/predict', {
+      method: 'POST',
+      body: formData
+    });
+    const result = await response.json();
+    if (response.ok) {
+      let predictionText = '';
+      if (result.resnet_class) {
+        predictionText = result.resnet_class === 'No Tumor Detected' ? 
+          `<span class="text-green-600 font-bold">${result.resnet_class}</span>` : 
+          `<span class="text-red-600 font-bold">${result.resnet_class}</span>`;
+      } else if (result.fracture_yolo_class) {
+        predictionText = result.fracture_yolo_class === 'not fractured' ? 
+          `<span class="text-green-600 font-bold">${result.fracture_yolo_class}</span>` : 
+          `<span class="text-red-600 font-bold">${result.fracture_yolo_class}</span>`;
+      }
+      predictionResults.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="text-gray-700 mr-4">Prediction:</span>
+          ${predictionText}
+        </div>
+      `;
+      predictionResults.classList.remove('hidden');
+    } else {
+      alert(result.error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred while predicting.');
+  }
+});
+
+uploadAnotherBtn.addEventListener('click', () => {
+  resultSection.classList.add('hidden');
+  predictBtn.disabled = true;
+  originalImage.style.backgroundImage = '';
+  predictionResults.classList.add('hidden');
+});
+
+technicalDetailsBtn.addEventListener('click', () => {
+  technicalDetailsModal.classList.remove('hidden');
+});
+
+function closeTechnicalDetails() {
+  technicalDetailsModal.classList.add('hidden');
+}
+
+function closeAboutModal() {
+  aboutModal.classList.add('hidden');
+}
+
+technicalDetailsModal.addEventListener('click', (e) => {
+  if (e.target === technicalDetailsModal) {
+    closeTechnicalDetails();
+  }
+});
+
+aboutBtn.addEventListener('click', () => {
+  aboutModal.classList.remove('hidden');
+});
+
+aboutModal.addEventListener('click', (e) => {
+  if (e.target === aboutModal) {
+    closeAboutModal();
+  }
+});
+</script>
+</body>
+</html>
